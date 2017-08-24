@@ -10,11 +10,7 @@ import subprocess
 import sys
 
 class MqttSender(object):
-	"""docstring for ClassName"""
-	#def __init__(self):
-
-
-	def sendMQTT(self, topic, data):
+	def sendMQTT(self, topic, measurements):
 		config = configparser.ConfigParser()
 		config.read("config.ini")
 
@@ -22,7 +18,7 @@ class MqttSender(object):
 
 		# Get configuration
 		hostname = config.get("Account", "hostname")
-		port = config.get("Account", "port")
+		port = int(config.get("Account", "port"))
 		username = config.get("Account", "user")
 		password = config.get("Account", "password")
 
@@ -31,15 +27,32 @@ class MqttSender(object):
 		client.tls_set(config.get("Account", "cacrtPath"), tls_version=ssl.PROTOCOL_TLSv1_2)
 		client.connect(hostname, port, 60)
 
-		uname = subprocess.Popen('uname -n', stdout=subprocess.PIPE, shell=True).stdout.read().strip()
+		uname = subprocess.Popen('uname -n', stdout=subprocess.PIPE, shell=True).stdout.read().decode(encoding='UTF-8').strip()
 
 		# Publish a message
-		print("Topic: {}/{}/{}, data: {}".format(topic,username,uname,data))
-		#client.publish(topic+"/"+username+"/"+uname, json.dumps(data))
+		print("Topic: {}/{}/{}, data: {}".format(topic,username,uname,measurements))
+		client.publish(topic+"/"+username+"/"+uname, json.dumps(data))
 
 	def parseStdIn(self):
-		for line in sys.stdin:
-			print(line)
+		try:
+			data = json.load(sys.stdin)
+			#print(data.keys())
+			# expected data: topic, measurements
+			# measurements should contain timestamp
+			if "topic" in data.keys() and "measurements" in data.keys():
+				measurements = data["measurements"]
+				if "timestamp" in measurements.keys():
+					print(data)
+					return data["topic"], measurements
+				else:
+					print("Malformed data: No timestamp sent.")
+			else:
+				print("Malformed data: No topic sent.")
+		except json.decoder.JSONDecodeError as e:
+			print("Malformed data: {}".format(e.msg))
+
+
+
 
 if __name__ == "__main__":
 	mqttSender = MqttSender()
