@@ -1,0 +1,10 @@
+# config file
+config.ini
+
+#venv files
+bin
+include
+lib
+pip-selfcheck.json
+pyvenv.cfg
+
