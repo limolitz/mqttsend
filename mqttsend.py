@@ -41,11 +41,11 @@ class MqttSender(object):
 			# measurements should contain timestamp
 			if "topic" in data.keys() and "measurements" in data.keys():
 				measurements = data["measurements"]
-				if "timestamp" in measurements.keys():
-					print(data)
-					return data["topic"], measurements
-				else:
-					print("Malformed data: No timestamp sent.")
+				if not("timestamp" in measurements.keys()):
+					timestamp = datetime.datetime.utcnow().strftime("%s")
+					print("No timestamp sent. Using our own.")
+					measurements["timestamp"] = timestamp
+				return data["topic"], measurements
 			else:
 				print("Malformed data: No topic sent.")
 		except json.decoder.JSONDecodeError as e:
