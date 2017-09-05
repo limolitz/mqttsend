@@ -30,20 +30,21 @@ class MqttSender(object):
 		uname = subprocess.Popen('uname -n', stdout=subprocess.PIPE, shell=True).stdout.read().decode(encoding='UTF-8').strip()
 
 		# Publish a message
-		print("Topic: {}/{}/{}, data: {}".format(topic,username,uname,measurements))
+		#print("Topic: {}/{}/{}, data: {}".format(topic,username,uname,measurements))
 		client.publish(topic+"/"+username+"/"+uname, json.dumps(data))
 
 	def parseStdIn(self):
 		try:
 			data = json.load(sys.stdin)
-			#print(data.keys())
+			#print("Keys: {}".format(data.keys()))
+			#print("Data: {}".format(data))
 			# expected data: topic, measurements
 			# measurements should contain timestamp
 			if "topic" in data.keys() and "measurements" in data.keys():
 				measurements = data["measurements"]
 				if not("timestamp" in measurements.keys()):
 					timestamp = datetime.datetime.utcnow().strftime("%s")
-					print("No timestamp sent. Using our own.")
+					#print("No timestamp sent. Using our own.")
 					measurements["timestamp"] = timestamp
 				return data["topic"], measurements
 			else:
