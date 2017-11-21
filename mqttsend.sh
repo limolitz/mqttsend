@@ -1,7 +1,5 @@
 #!/bin/bash
-ownPath="$(readlink -f "$0")"
-ownFolder="$(dirname "$ownPath")"
-cd $ownFolder
+cd $(dirname "${BASH_SOURCE[0]}")
 
 if [ ! -f "bin/activate" ]; then
 	echo "No venv found. Please make one!"
