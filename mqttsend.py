@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 class MqttSender(object):
-	def sendMQTT(self, topic, measurements):
+	def sendMQTT(self, topic, measurements, name):
 		config = configparser.ConfigParser()
 		config.read("config.ini")
 
@@ -30,8 +30,12 @@ class MqttSender(object):
 		uname = subprocess.Popen('uname -n', stdout=subprocess.PIPE, shell=True).stdout.read().decode(encoding='UTF-8').strip()
 
 		# Publish a message
-		#print("Topic: {}/{}/{}, data: {}".format(topic,username,uname,measurements))
-		client.publish(topic+"/"+username+"/"+uname, json.dumps(data))
+		if name is None:
+			print("Topic: {}/{}/{}, data: {}".format(topic,username,uname,measurements))
+			client.publish("{}/{}/{}".format(topic,username,uname), json.dumps(measurements))
+		else:
+			print("Topic: {}/{}/{}/{}, data: {}".format(topic,username,uname,measurements,name))
+			client.publish("{}/{}/{}/{}".format(topic,username,uname,name), json.dumps(measurements))
 
 	def parseStdIn(self):
 		try:
@@ -39,6 +43,7 @@ class MqttSender(object):
 			#print("Keys: {}".format(data.keys()))
 			#print("Data: {}".format(data))
 			# expected data: topic, measurements
+			# could contain additional key name
 			# measurements should contain timestamp
 			if "topic" in data.keys() and "measurements" in data.keys():
 				measurements = data["measurements"]
@@ -46,7 +51,10 @@ class MqttSender(object):
 					timestamp = datetime.datetime.utcnow().strftime("%s")
 					#print("No timestamp sent. Using our own.")
 					measurements["timestamp"] = timestamp
-				return data["topic"], measurements
+				if "name" in data.keys():
+					return data["topic"], measurements, data["name"]
+				else:
+					return data["topic"], measurements, None
 			else:
 				print("Malformed data: No topic sent.")
 		except json.decoder.JSONDecodeError as e:
@@ -57,5 +65,5 @@ class MqttSender(object):
 
 if __name__ == "__main__":
 	mqttSender = MqttSender()
-	topic, data = mqttSender.parseStdIn()
-	mqttSender.sendMQTT(topic,data)
+	topic, data, name = mqttSender.parseStdIn()
+	mqttSender.sendMQTT(topic,data,name)
