@@ -3,4 +3,3 @@ hostname = example.com
 port = 64259
 user = <user>
 password = <password>
-cacrtPath = <ca.crt>

@@ -24,7 +24,7 @@ class MqttSender(object):
 
 		# Connect
 		client.username_pw_set(username, password = password)
-		client.tls_set(config.get("Account", "cacrtPath"), tls_version=ssl.PROTOCOL_TLSv1_2)
+		client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
 		client.connect(hostname, port, 60)
 
 		uname = subprocess.Popen('uname -n', stdout=subprocess.PIPE, shell=True).stdout.read().decode(encoding='UTF-8').strip()
