@@ -8,13 +8,15 @@ import json
 import datetime
 import subprocess
 import sys
+import os
 
 class MqttSender(object):
 	def sendMQTT(self, topic, measurements, name):
 		config = configparser.ConfigParser()
 		config.read("config.ini")
 
-		client = mqtt.Client()
+		client = mqtt.Client(client_id="mqttsend-frost-{}".format(os.getpid()))
+		print("PID: {}".format(os.getpid()))
 
 		# Get configuration
 		hostname = config.get("Account", "hostname")
@@ -32,10 +34,11 @@ class MqttSender(object):
 		# Publish a message
 		if name is None:
 			print("Topic: {}/{}/{}, data: {}".format(topic,username,uname,measurements))
-			client.publish("{}/{}/{}".format(topic,username,uname), json.dumps(measurements))
+			resp = client.publish("{}/{}/{}".format(topic,username,uname), json.dumps(measurements), qos=1)
 		else:
 			print("Topic: {}/{}/{}/{}, data: {}".format(topic,username,uname,measurements,name))
-			client.publish("{}/{}/{}/{}".format(topic,username,uname,name), json.dumps(measurements))
+			resp = client.publish("{}/{}/{}/{}".format(topic,username,uname,name), json.dumps(measurements), qos=1)
+		client.disconnect()
 
 	def parseStdIn(self):
 		try:
@@ -48,8 +51,8 @@ class MqttSender(object):
 			if "topic" in data.keys() and "measurements" in data.keys():
 				measurements = data["measurements"]
 				if not("timestamp" in measurements.keys()):
-					timestamp = datetime.datetime.utcnow().strftime("%s")
-					#print("No timestamp sent. Using our own.")
+					timestamp = datetime.datetime.now(tz=datetime.timezone.utc).timestamp()
+					print("No timestamp sent. Using our own: {}.".format(timestamp))
 					measurements["timestamp"] = timestamp
 				if "name" in data.keys():
 					return data["topic"], measurements, data["name"]
