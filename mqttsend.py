@@ -59,9 +59,11 @@ class MqttSender(object):
 				else:
 					return data["topic"], measurements, None
 			else:
-				print("Malformed data: No topic sent.")
+				print("Malformed data: No topic sent.", file=sys.stderr)
+				exit(1)
 		except json.decoder.JSONDecodeError as e:
-			print("Malformed data: {}".format(e.msg))
+			print("Malformed data: {}".format(e.msg), file=sys.stderr)
+			exit(1)
 
 
 
