@@ -15,14 +15,15 @@ class MqttSender(object):
 		config = configparser.ConfigParser()
 		config.read("config.ini")
 
-		client = mqtt.Client(client_id="mqttsend-frost-{}".format(os.getpid()))
-		print("PID: {}".format(os.getpid()))
+		client_id = "mqttsend-{}-{}".format(os.uname().nodename, os.getpid())
+		client = mqtt.Client(client_id=client_id)
 
 		# Get configuration
 		hostname = config.get("Account", "hostname")
 		port = int(config.get("Account", "port"))
 		username = config.get("Account", "user")
 		password = config.get("Account", "password")
+
 
 		# Connect
 		client.username_pw_set(username, password = password)
@@ -33,11 +34,11 @@ class MqttSender(object):
 
 		# Publish a message
 		if name is None:
-			print("Topic: {}/{}/{}, data: {}".format(topic,username,uname,measurements))
-			resp = client.publish("{}/{}/{}".format(topic,username,uname), json.dumps(measurements), qos=1)
+			topic = "{}/{}/{}".format(topic,username,uname)
 		else:
-			print("Topic: {}/{}/{}/{}, data: {}".format(topic,username,uname,measurements,name))
-			resp = client.publish("{}/{}/{}/{}".format(topic,username,uname,name), json.dumps(measurements), qos=1)
+			topic = "{}/{}/{}/{}".format(topic,username,uname,name)
+		print("Topic: {}, data: {}".format(topic,measurements))
+		resp = client.publish(topic, json.dumps(measurements), qos=1)
 		client.disconnect()
 
 	def parseStdIn(self):
